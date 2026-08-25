@@ -10,6 +10,7 @@ import {
   ClientsPage,
   DashboardPage,
   ModulePage,
+  RequestsPage,
   SettingsPage,
   UsersPage,
 } from '@/pages/portal-pages';
@@ -38,7 +39,7 @@ function Router() {
           <Route path="/users" component={UsersPage} />
           <Route path="/audit" component={AuditPage} />
           <Route path="/settings" component={SettingsPage} />
-          <Route path="/requests"><ModulePage module="/requests" /></Route>
+          <Route path="/requests" component={RequestsPage} />
           <Route path="/matters"><ModulePage module="/matters" /></Route>
           <Route path="/litigation"><ModulePage module="/litigation" /></Route>
           <Route path="/sub-clients"><ModulePage module="/sub-clients" /></Route>

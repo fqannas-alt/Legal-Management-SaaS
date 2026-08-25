@@ -239,3 +239,75 @@ export const ListAuditLogsResponseItem = zod.object({
 export const ListAuditLogsResponse = zod.array(ListAuditLogsResponseItem)
 
 
+/**
+ * @summary List legal service requests
+ */
+export const ListRequestsResponseItem = zod.object({
+  "id": zod.string(),
+  "referenceNo": zod.string(),
+  "title": zod.string(),
+  "requester": zod.string(),
+  "type": zod.string(),
+  "priority": zod.string(),
+  "status": zod.string(),
+  "details": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListRequestsResponse = zod.array(ListRequestsResponseItem)
+
+
+/**
+ * @summary Create a legal service request
+ */
+export const createRequestBodyTitleMin = 2;
+
+
+
+export const CreateRequestBody = zod.object({
+  "title": zod.string().min(createRequestBodyTitleMin),
+  "requester": zod.string(),
+  "type": zod.string(),
+  "priority": zod.string(),
+  "details": zod.string()
+})
+
+export const CreateRequestResponse = zod.object({
+  "id": zod.string(),
+  "referenceNo": zod.string(),
+  "title": zod.string(),
+  "requester": zod.string(),
+  "type": zod.string(),
+  "priority": zod.string(),
+  "status": zod.string(),
+  "details": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Move a request through its workflow
+ */
+export const UpdateRequestStatusParams = zod.object({
+  "requestId": zod.coerce.string()
+})
+
+export const UpdateRequestStatusBody = zod.object({
+  "status": zod.string()
+})
+
+export const UpdateRequestStatusResponse = zod.object({
+  "id": zod.string(),
+  "referenceNo": zod.string(),
+  "title": zod.string(),
+  "requester": zod.string(),
+  "type": zod.string(),
+  "priority": zod.string(),
+  "status": zod.string(),
+  "details": zod.string().optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+

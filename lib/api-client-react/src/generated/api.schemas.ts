@@ -96,6 +96,32 @@ export interface AuditLog {
   description: string;
 }
 
+export interface ServiceRequest {
+  id: string;
+  referenceNo: string;
+  title: string;
+  requester: string;
+  type: string;
+  priority: string;
+  status: string;
+  details?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceRequestInput {
+  /** @minLength 2 */
+  title: string;
+  requester: string;
+  type: string;
+  priority: string;
+  details: string;
+}
+
+export interface RequestStatusInput {
+  status: string;
+}
+
 export type SearchParameter = string;
 
 export type StatusParameter = string;

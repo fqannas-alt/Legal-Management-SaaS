@@ -11,6 +11,9 @@ import {
   ListClientsResponse,
   ListUsersResponse,
   ListAuditLogsResponse,
+  CreateRequestBody,
+  RequestStatusInput,
+  ListRequestsResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -88,6 +91,25 @@ const auditLogs = [
   { id: "au-002", user: "خالد الزهراني", action: "إنشاء", entity: "ملف قانوني", timestamp: "اليوم، 09:18 ص", description: "تم إنشاء الملف القانوني LM-0018" },
   { id: "au-003", user: "نورة الحربي", action: "رفع", entity: "مستند", timestamp: "أمس، 04:35 م", description: "تم رفع مذكرة الرد على الدعوى" },
   { id: "au-004", user: "سارة العتيبي", action: "دعوة", entity: "مستخدم", timestamp: "أمس، 01:10 م", description: "تم إرسال دعوة إلى أحمد المطيري" },
+];
+
+type ServiceRequest = {
+  id: string;
+  referenceNo: string;
+  title: string;
+  requester: string;
+  type: string;
+  priority: string;
+  status: string;
+  details: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const requests: ServiceRequest[] = [
+  { id: "rq-001", referenceNo: "RQ-0001", title: "مراجعة عقد توريد سنوي", requester: "شركة المدار القابضة", type: "مراجعة عقد", priority: "high", status: "UNDER_REVIEW", details: "مراجعة البنود التجارية ومسؤوليات الأطراف.", createdAt: "2026-08-22", updatedAt: "منذ ساعتين" },
+  { id: "rq-002", referenceNo: "RQ-0002", title: "استشارة حول نزاع تجاري", requester: "شركة التقنية المتحدة", type: "استشارة قانونية", priority: "medium", status: "NEW", details: "تقييم الخيارات القانونية قبل رفع الدعوى.", createdAt: "2026-08-23", updatedAt: "أمس" },
+  { id: "rq-003", referenceNo: "RQ-0003", title: "إشعار دعوى قضائية", requester: "شركة البناء الحديثة", type: "تقاضي", priority: "urgent", status: "NEED_MORE_INFORMATION", details: "تم استلام إشعار دعوى ونحتاج بيانات الدائرة.", createdAt: "2026-08-24", updatedAt: "منذ 5 ساعات" },
 ];
 
 router.get("/dashboard/summary", (_req, res) => {
@@ -201,6 +223,36 @@ router.get("/audit-logs", (req, res) => {
     !search || `${log.user} ${log.action} ${log.entity} ${log.description}`.toLowerCase().includes(search),
   );
   res.json(ListAuditLogsResponse.parse(result));
+});
+
+router.get("/requests", (_req, res) => {
+  res.json(ListRequestsResponse.parse(requests));
+});
+
+router.post("/requests", (req, res) => {
+  const input = CreateRequestBody.parse(req.body);
+  const request: ServiceRequest = {
+    id: `rq-${String(requests.length + 1).padStart(3, "0")}`,
+    referenceNo: `RQ-${String(requests.length + 1).padStart(4, "0")}`,
+    ...input,
+    status: "NEW",
+    createdAt: new Date().toISOString().slice(0, 10),
+    updatedAt: "الآن",
+  };
+  requests.unshift(request);
+  res.status(201).json(request);
+});
+
+router.patch("/requests/:requestId/status", (req, res) => {
+  const input = RequestStatusInput.parse(req.body);
+  const request = requests.find((item) => item.id === req.params.requestId);
+  if (!request) {
+    res.status(404).json({ error: "Request not found" });
+    return;
+  }
+  request.status = input.status;
+  request.updatedAt = "الآن";
+  res.json(request);
 });
 
 export default router;

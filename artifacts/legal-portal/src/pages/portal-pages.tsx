@@ -36,9 +36,14 @@ import {
   useListAuditLogs,
   useListClients,
   useListUsers,
+  getListRequestsQueryKey,
+  useCreateRequest,
+  useListRequests,
+  useUpdateRequestStatus,
   useUpdateClient,
   useUpdateUser,
   type User,
+  type ServiceRequest,
 } from '@workspace/api-client-react';
 
 export function DashboardPage() {
@@ -242,6 +247,56 @@ export function AuditPage() {
   return <PageFrame eyebrow="الإدارة والحوكمة" title="سجل التدقيق" description="أثر موثوق لكل إجراء تم داخل مساحة العمل.">
     <section className="panel-shadow rounded-xl border border-card-border bg-card"><Toolbar search={search} onSearch={setSearch} placeholder="ابحث في الإجراءات أو الكيانات أو المستخدمين..." /><div className="flex items-center justify-between border-b border-border px-5 py-3 text-xs text-muted-foreground"><span>{logs.length} إجراء مسجل</span><button type="button" data-testid="button-audit-filter" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 font-medium hover:bg-muted hover:text-foreground"><Filter size={14} /> تصفية متقدمة</button></div>{auditQuery.isLoading ? <TableSkeleton columns={4} /> : auditQuery.isError ? <ErrorState onRetry={() => auditQuery.refetch()} /> : logs.length === 0 ? <EmptyState title="لا توجد سجلات" description="ستظهر جميع الإجراءات الحساسة هنا بعد تنفيذها." /> : <div className="overflow-x-auto"><table className="w-full min-w-[780px] text-right"><thead><tr className="border-b border-border bg-muted/45 text-[11px] font-semibold text-muted-foreground"><th className="px-5 py-3.5">المستخدم</th><th className="px-4 py-3.5">الإجراء</th><th className="px-4 py-3.5">الكيان</th><th className="px-4 py-3.5">التفاصيل</th><th className="px-4 py-3.5">التوقيت</th></tr></thead><tbody className="divide-y divide-border/70">{logs.map((log) => <tr key={log.id} data-testid={`row-audit-${log.id}`} className="data-row"><td className="px-5 py-4"><div className="flex items-center gap-2.5"><Avatar initials={log.user.slice(0, 2)} small /><span className="text-xs font-semibold">{log.user}</span></div></td><td className="px-4 py-4"><ActionBadge action={log.action} /></td><td className="px-4 py-4 text-xs font-medium">{log.entity}</td><td className="max-w-[300px] px-4 py-4 text-xs text-muted-foreground">{log.description}</td><td className="px-4 py-4 text-[11px] text-muted-foreground">{log.timestamp}</td></tr>)}</tbody></table></div>}</section>
   </PageFrame>;
+}
+
+export function RequestsPage() {
+  const queryClient = useQueryClient();
+  const requestQuery = useListRequests();
+  const createRequest = useCreateRequest();
+  const updateStatus = useUpdateRequestStatus();
+  const [dialog, setDialog] = useState(false);
+  const [title, setTitle] = useState('');
+  const [requester, setRequester] = useState('شركة المدار القابضة');
+  const [type, setType] = useState('استشارة قانونية');
+  const [priority, setPriority] = useState('medium');
+  const [details, setDetails] = useState('');
+  const requests = requestQuery.data ?? [];
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!title.trim() || !details.trim()) return;
+    createRequest.mutate({ data: { title, requester, type, priority, details } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListRequestsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListRequestsQueryKey() });
+        setTitle('');
+        setDetails('');
+        setDialog(false);
+      },
+    });
+  };
+  const move = (request: ServiceRequest, status: string) => updateStatus.mutate(
+    { requestId: request.id, data: { status } },
+    { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListRequestsQueryKey() }) },
+  );
+  return <PageFrame eyebrow="مساحة العمل" title="الطلبات القانونية" description="أنشئ طلبًا جديدًا وحرّكه عبر دورة المراجعة والقبول من مكان واحد.">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-2"><span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">{requests.length} طلبات</span><span className="text-xs text-muted-foreground">الدورة: جديد ← قيد المراجعة ← معلومات إضافية ← مقبول</span></div>
+      <button type="button" data-testid="button-create-request" onClick={() => setDialog(true)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"><Plus size={15} /> طلب خدمة جديد</button>
+    </div>
+    <div className="mb-6 grid gap-3 sm:grid-cols-4">{[['NEW', 'جديد'], ['UNDER_REVIEW', 'قيد المراجعة'], ['NEED_MORE_INFORMATION', 'معلومات إضافية'], ['ACCEPTED', 'مقبول']].map(([value, label]) => <div key={value} className="rounded-xl border border-card-border bg-card p-4 panel-shadow"><p className="text-[11px] text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold text-primary">{requests.filter((request) => request.status === value).length}</p></div>)}</div>
+    <section className="panel-shadow overflow-hidden rounded-xl border border-card-border bg-card">
+      {requestQuery.isLoading ? <TableSkeleton columns={5} /> : requestQuery.isError ? <ErrorState onRetry={() => requestQuery.refetch()} /> : requests.length === 0 ? <EmptyState title="لا توجد طلبات" description="أنشئ أول طلب خدمة لتجربة دورة العمل." actionLabel="طلب خدمة جديد" onAction={() => setDialog(true)} /> : <div className="divide-y divide-border/70">{requests.map((request) => <RequestRow key={request.id} request={request} onMove={move} />)}</div>}
+    </section>
+    {dialog && <Modal title="إنشاء طلب خدمة قانونية" description="سيبدأ الطلب بحالة جديد ويمكن نقله لاحقًا إلى المرحلة التالية." onClose={() => setDialog(false)}><form onSubmit={submit} className="space-y-4"><Field label="عنوان الطلب" required><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} data-testid="input-request-title" className="field-input" placeholder="مثال: مراجعة اتفاقية شراكة" /></Field><Field label="الجهة الطالبة"><input value={requester} onChange={(event) => setRequester(event.target.value)} data-testid="input-requester" className="field-input" /></Field><div className="grid grid-cols-2 gap-3"><Field label="نوع الطلب"><select value={type} onChange={(event) => setType(event.target.value)} className="field-input"><option>استشارة قانونية</option><option>مراجعة عقد</option><option>تقاضي</option></select></Field><Field label="الأولوية"><select value={priority} onChange={(event) => setPriority(event.target.value)} className="field-input"><option value="low">منخفضة</option><option value="medium">متوسطة</option><option value="high">عالية</option><option value="urgent">عاجلة</option></select></Field></div><Field label="تفاصيل الطلب" required><textarea value={details} onChange={(event) => setDetails(event.target.value)} data-testid="input-request-details" className="field-input min-h-24 resize-y" placeholder="اكتب ملخصًا واضحًا للطلب..." /></Field>{createRequest.isError && <p className="rounded-lg bg-[#f6e3dc] px-3 py-2 text-xs text-[#a45043]">تعذر إنشاء الطلب.</p>}<DialogActions onClose={() => setDialog(false)} pending={createRequest.isPending} label="إنشاء الطلب" /></form></Modal>}
+  </PageFrame>;
+}
+
+function RequestRow({ request, onMove }: { request: ServiceRequest; onMove: (request: ServiceRequest, status: string) => void }) {
+  const steps = ['NEW', 'UNDER_REVIEW', 'NEED_MORE_INFORMATION', 'ACCEPTED'];
+  const labels: Record<string, string> = { NEW: 'جديد', UNDER_REVIEW: 'قيد المراجعة', NEED_MORE_INFORMATION: 'معلومات إضافية', ACCEPTED: 'مقبول', REJECTED: 'مرفوض' };
+  const current = steps.indexOf(request.status);
+  const next = request.status === 'NEW' ? 'UNDER_REVIEW' : request.status === 'UNDER_REVIEW' ? 'NEED_MORE_INFORMATION' : request.status === 'NEED_MORE_INFORMATION' ? 'ACCEPTED' : null;
+  return <div className="p-5 md:p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-2"><span className="font-mono-ui text-[11px] text-muted-foreground">{request.referenceNo}</span><StatusBadge status={request.status} /></div><h3 className="mt-2 text-base font-bold text-primary">{request.title}</h3><p className="mt-1 text-xs text-muted-foreground">{request.requester} · {request.type}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-muted-foreground">{request.details}</p></div><div className="flex items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${request.priority === 'urgent' ? 'bg-[#f6e3dc] text-[#a45043]' : request.priority === 'high' ? 'bg-[#f7ecd9] text-[#a16b32]' : 'bg-muted text-muted-foreground'}`}>{request.priority === 'urgent' ? 'عاجلة' : request.priority === 'high' ? 'عالية' : 'اعتيادية'}</span>{next && <button type="button" data-testid={`button-advance-request-${request.id}`} onClick={() => onMove(request, next)} className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">نقل إلى {labels[next]}</button>}</div></div><div className="mt-5 flex items-center gap-1">{steps.map((step, index) => <div key={step} className="flex flex-1 items-center gap-1"><div className={`h-2 flex-1 rounded-full ${index <= current ? 'bg-[#3f897f]' : 'bg-muted'}`} /><span className={`hidden text-[10px] sm:block ${index <= current ? 'font-semibold text-[#347a73]' : 'text-muted-foreground'}`}>{labels[step]}</span></div>)}</div></div>;
 }
 
 export function SettingsPage() {

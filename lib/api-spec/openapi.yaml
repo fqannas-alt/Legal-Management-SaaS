@@ -14,6 +14,8 @@ tags:
   - name: clients
   - name: users
   - name: audit
+  - name: requests
+    description: Legal service request workflow
 paths:
   /healthz:
     get:
@@ -177,6 +179,60 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AuditLog"
+  /requests:
+    get:
+      operationId: listRequests
+      tags: [requests]
+      summary: List legal service requests
+      responses:
+        "200":
+          description: Request list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceRequest"
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Create a legal service request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceRequestInput"
+      responses:
+        "201":
+          description: Created request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+  /requests/{requestId}/status:
+    patch:
+      operationId: updateRequestStatus
+      tags: [requests]
+      summary: Move a request through its workflow
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestStatusInput"
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
 components:
   parameters:
     Search:
@@ -314,4 +370,32 @@ components:
         entity: { type: string }
         timestamp: { type: string }
         description: { type: string }
+    ServiceRequest:
+      type: object
+      required: [id, referenceNo, title, requester, type, priority, status, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        referenceNo: { type: string }
+        title: { type: string }
+        requester: { type: string }
+        type: { type: string }
+        priority: { type: string }
+        status: { type: string }
+        details: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    ServiceRequestInput:
+      type: object
+      required: [title, requester, type, priority, details]
+      properties:
+        title: { type: string, minLength: 2 }
+        requester: { type: string }
+        type: { type: string }
+        priority: { type: string }
+        details: { type: string }
+    RequestStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
 
