@@ -1,0 +1,17 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Aq6DXvHt4u4UMQvTZw7fq"
+uri = "file://.conversation/FOUNDATION-BLUEPRINT.md"
+type = "text"
+title = "Foundation Blueprint"
+description = "مسودة Architecture وDatabase Schema وERD واستراتيجية الصلاحيات والعزل وخطة التنفيذ لمنصة إدارة الأعمال القانونية."
+logical_id = "0d0f12d5-e80a-43bd-9782-06a060510be5"
+content_hash = "sha256:3e1564a67e6cd55c6bbb6fc889832f82fe7b2e816cf56d8c67759aff08afacfa"
+size = 18722
+mtime_ms = 1787671123008
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/conversation:c7ffe49c-a04c-4b01-9d29-193fd403e8d7/0d0f12d5-e80a-43bd-9782-06a060510be5/78001ef0-90f8-43ef-8277-22b5417749ee"
+storage_version_token = "1787671130844478"
+content_type = "text/markdown"
+source_uri = "file://FOUNDATION-BLUEPRINT.md"

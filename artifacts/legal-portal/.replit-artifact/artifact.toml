@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Legal Management Portal"
+description = "Enterprise legal operations portal for managing clients, users, permissions, legal matters, litigation, documents, and upcoming deadlines in Arabic RTL."
+version = "1.0.0"
+id = "artifacts/legal-portal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21744
+
+[services.development]
+run = "pnpm --filter @workspace/legal-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/legal-portal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/legal-portal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21744"
+BASE_PATH = "/"

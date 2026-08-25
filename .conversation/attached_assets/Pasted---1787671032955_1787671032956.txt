@@ -1,0 +1,678 @@
+التزم بالاوامر اللي بعطيك اياها ووما تجتهد اشي من عندك .. 
+هاي اللوجو بالمرفق وشكل مقترح للبورتال مبدئياً اعمله وبنعدل عليه بعدين وضيف عليه اللوجو .. 
+
+أرغب في بناء منصة SaaS متخصصة في إدارة الأعمال القانونية للشركات ومكاتب المحاماة، على أن تكون قابلة للتوسع مستقبلًا وإضافة وحدات جديدة دون إعادة بناء النظام.
+المطلوب في المرحلة الأولى بناء البنية الأساسية للمنصة، مع التركيز على إدارة المستخدمين والعملاء والأطراف والملفات القانونية والتقاضي، مع تجهيز Architecture قابلة لإضافة منصة العقود لاحقًا.
+1. الفكرة العامة
+المنصة تخدم نوعين رئيسيين من العملاء:
+
+الإدارات القانونية داخل الشركات.
+مكاتب وشركات المحاماة.
+وتقوم المنصة على Modules مستقلة، بحيث يمكن لكل Client الاشتراك في Module واحد أو أكثر.
+الموديولات الأساسية:
+
+Litigation Management.
+Contract Lifecycle Management.
+وفي المرحلة الحالية نركز على:
+
+إدارة العملاء.
+إدارة المستخدمين.
+إدارة Sub-Clients.
+إدارة Parties.
+Legal Matters.
+Litigation Cases.
+Multi-Tenant Architecture
+يجب أن تكون المنصة Multi-Tenant SaaS.
+كل Client يجب أن تكون بياناته معزولة بالكامل عن بقية العملاء.
+كل Record أساسي يجب أن يكون مرتبطًا بـ:
+client_id
+ويجب منع أي مستخدم من الوصول إلى بيانات Client آخر سواء من الواجهة أو الـAPI.
+أنواع الكيانات الأساسية
+يجب إنشاء الكيانات التالية بشكل مستقل:
+Client
+العميل المتعاقد مباشرة مع المنصة.
+مثال:
+CL-0001
+يحتوي على:
+الاسم.
+البيانات الأساسية.
+الباقة.
+Modules المفعلة.
+عدد الحسابات المسموحة.
+إعدادات النظام الخاصة به.
+حالة الاشتراك.
+Sub-Client
+هو عميل الـClient.
+مثال:
+مكتب محاماة لديه شركة ABC كعميل.
+شركة ABC تكون:
+SC-0001
+يكون للـSub-Client ملف مستقل ويحتوي على:
+
+معلومات عامة.
+البيانات الرسمية.
+المساهمين.
+أعضاء مجلس الإدارة.
+المديرين.
+الأشخاص المرتبطين.
+الشركات المرتبطة.
+الأصول.
+الحسابات المصرفية.
+مفوضي التوقيع.
+المرفقات.
+التذكيرات.
+Timeline.
+القضايا.
+العقود.
+الإعدادات.
+بعض هذه الأقسام يمكن إخفاؤها أو إظهارها حسب Modules المفعلة.
+User
+هو المستخدم الذي يمتلك حساب دخول فعلي.
+مثال:
+US-0001
+Party
+هو شخص أو شركة مسجلة داخل النظام ولكن ليس بالضرورة أن يكون لها User Account.
+مثال:
+PT-0001
+ويكون نوع Party:
+
+Individual.
+Organization.
+أنواع المستخدمين
+يجب دعم ثلاثة أنواع رئيسية:
+Standard User
+حساب مستخدم عادي.
+يمكن إنشاء عدد غير محدود منه وفق إعدادات Client.
+Privileged User
+مستخدم داخلي بصلاحيات متقدمة.
+عدد هذه الحسابات يخضع للحد الذي يمنحه Platform Owner للـClient.
+Sub-Client User
+مستخدم تابع لـSub-Client ويملك حساب دخول للمنصة.
+عدد هذه الحسابات يخضع لحدود الاشتراك.
+إدارة المستخدمين
+Primary Admin لدى الـClient يجب أن يستطيع:
+إنشاء مستخدم.
+تعديل مستخدم.
+تعطيل مستخدم.
+حذف أو إلغاء مستخدم.
+اختيار Role.
+تخصيص Permissions.
+ربط المستخدم بـSub-Client عند الحاجة.
+التحكم في الوصول إلى Modules.
+التحكم في الوصول إلى Records محددة.
+Roles & Permissions
+استخدم نظام:
+RBAC + Custom User Permissions
+يكون هناك Roles جاهزة مثل:
+Client Admin.
+Legal Director.
+Litigation Manager.
+Contract Manager.
+Lawyer.
+Standard User.
+External User.
+كل Role لديه Default Permissions.
+لكن يمكن تعديل صلاحيات أي User بشكل مستقل.
+الصلاحيات يجب أن تكون Granular، مثل:
+
+View.
+Create.
+Edit.
+Delete.
+Assign.
+Export.
+Manage Users.
+Manage Settings.
+View Reports.
+Approve.
+ويجب أن تكون الصلاحيات قابلة للتطبيق على مستوى Module وعلى مستوى Record عند الحاجة.
+7. Record Privacy
+كل Record أساسي يجب أن يحتوي إعداد خصوصية.
+الخيارات الأساسية:
+All Authorized Users
+السجل متاح لجميع المستخدمين الذين تسمح لهم صلاحياتهم بذلك.
+Specific Users
+يتم تحديد Users معينين يمكنهم الوصول إلى السجل.
+يجب تطبيق هذا المفهوم على:
+
+Parties.
+Legal Matters.
+Cases.
+Contracts.
+Documents.
+Party Management
+أنشئ Party Management Module مركزي.
+Individual Party
+يحتوي على Tabs:
+General Information.
+Attachments.
+Cases.
+Contracts.
+Reminders.
+Related Persons.
+Organization Party
+يحتوي على Tabs:
+
+General Information.
+Attachments.
+Cases.
+Contracts.
+Reminders.
+Related Persons.
+Related Companies.
+Party Relationships
+العلاقات بين Parties يجب ألا تكون Text فقط.
+أنشئ Relationship Entity.
+مثال:
+Person A -> Manager Of -> Company B
+Company B -> Subsidiary Of -> Company C
+Person D -> Legal Representative Of -> Company B
+ويجب دعم أنواع علاقات قابلة للتخصيص.
+Categories
+كل Client يستطيع إنشاء:
+Main Categories.
+Subcategories.
+وذلك للـParties والـLegal Matters وغيرها.
+مثال:
+Clients -> Companies / Individuals
+أو:
+Counterparties -> Supplier / Partner / Tenant
+ويجب استخدام هذه التصنيفات في:
+
+Filters.
+Search.
+Reports.
+Duplicate Prevention
+قبل إنشاء Party جديد:
+ابحث عن Records مشابهة باستخدام:
+Name.
+National ID.
+Commercial Registration.
+Unified Number.
+Other Identifiers.
+إذا وجد Similar Record:
+اعرض Warning.
+إذا وجد Identifier مطابق تمامًا:
+اعرض Strong Warning أو امنع الإنشاء حسب Settings.
+12. Merge Parties
+أنشئ وظيفة:
+Merge Parties
+للمستخدمين المخولين.
+يجب عند الدمج نقل وربط:
+
+Cases.
+Contracts.
+Attachments.
+Relationships.
+Reminders.
+Activities.
+مع الحفاظ على Audit Trail.
+13. Internal Numbering
+كل Entity يجب أن يحصل على Internal Reference تلقائي.
+مثال:
+Client: CL-0001
+Sub-Client: SC-0001
+User: US-0001
+Party: PT-0001
+Legal Matter: LM-0001
+Case: LC-0001
+ويفضل أن يكون Numbering Format قابلًا للتخصيص لكل Client مستقبلًا.
+14. العلاقة بين Sub-Client وParty
+يجب ألا يتم إنشاء Party مكرر إذا كان Sub-Client نفسه طرفًا في Case أو Contract.
+عند اختيار طرف في Case أو Contract، يجب أن يتمكن المستخدم من البحث في:
+
+Sub-Clients.
+Parties.
+ويتم إظهارهم في Unified Selector.
+إذا تحول Party مستقبلًا إلى Sub-Client، يجب دعم Linking/Conversion دون فقد البيانات التاريخية.
+15. Legal Matter
+استخدم المسمى:
+Legal Matter
+والاسم العربي:
+الملف القانوني
+الملف القانوني هو Parent Container للعمل القانوني.
+ليس كل Legal Matter بالضرورة أن يحتوي على Litigation Case.
+أمثلة:
+
+Dispute.
+Claim.
+Pre-Litigation Settlement.
+Legal Consultation.
+Internal Investigation.
+Complaint.
+Regulatory Matter.
+IP Matter.
+Corporate Matter.
+يجب أن يستطيع كل Client تخصيص:
+
+Types.
+Main Categories.
+Subcategories.
+Statuses.
+Legal Matter Status
+يجب دعم Workflow قابل للتخصيص.
+Default Statuses:
+New.
+Under Review.
+In Progress.
+Waiting for External Party.
+Completed.
+Closed.
+ويجب أن يستطيع Client تعديل أو إضافة Statuses.
+17. Legal Matter Timeline
+كل Legal Matter يجب أن يحتوي على Timeline تلقائي.
+أمثلة Events:
+
+Matter Created.
+User Assigned.
+Team Assigned.
+Status Changed.
+Document Added.
+Case Created.
+Reminder Added.
+Comment Added.
+كل Event يحتوي على:
+
+User.
+Date & Time.
+Event Type.
+Description.
+إنشاء العمل القانوني
+هناك طريقتان:
+Direct Creation
+مستخدم داخلي مخول ينشئ Legal Matter أو Litigation Case مباشرة.
+Sub-Client Request
+مستخدم Sub-Client يرفع طلب خدمة قانونية.
+الطلب يصل للفريق القانوني.
+الحالات المبدئية:
+New.
+Under Review.
+Need More Information.
+Accepted.
+Rejected.
+وعند القبول يمكن تحويل الطلب إلى Legal Matter/Case مع نقل جميع البيانات والمرفقات تلقائيًا.
+19. Litigation Request – عندما يكون Sub-Client مدعى عليه
+أول سؤال:
+ما صفتك في النزاع؟
+الخيارات:
+
+Claimant.
+Defendant.
+إذا اختار:
+Defendant
+يظهر سؤال:
+ما نوع الإشعار الذي استلمته؟
+Pre-Litigation Settlement
+يظهر Textarea كبير لإدخال أو لصق نص الإشعار.
+مع Attachments.
+Filed Court Case
+يطلب:
+
+Lawsuit Registration Notice Text.
+Circuit Assignment Notice Text.
+Case Number.
+Attachments.
+في المستقبل يمكن إضافة AI لاستخراج بيانات الدعوى تلقائيًا من نص الإشعارات.
+20. Litigation Request – عندما يكون Sub-Client مدعيًا
+إذا اختار:
+Claimant
+يظهر نموذج يتضمن:
+
+Case Title.
+Case Details.
+Claim Amount.
+Attachments.
+Technical Contact Person.
+Technical Contact Details.
+Financial Contact Person.
+Financial Contact Details.
+بعد الإرسال يصبح الطلب:
+Litigation Request
+ولا يتحول إلى Case إلا بعد قبول الفريق القانوني.
+21. إنشاء Case من فريق Client
+نموذج إنشاء القضية الداخلي يجب أن يحتوي على Sections واضحة.
+General Information
+الحقول:
+
+Main Case Category.
+Subcategory.
+Case Type.
+Case Name / Title.
+Court Case Number.
+Sub-Client.
+Client Capacity / Role.
+Details.
+Attachments.
+Internal Reference Number.
+Priority.
+Privacy.
+Opponents
+يمكن إضافة خصم واحد أو أكثر.
+لكل خصم:
+
+Party/Sub-Client.
+Role in Case.
+ويجب السماح بإنشاء Party جديد من داخل النموذج.
+People Involved
+
+Requested By.
+Assigned Team.
+Assigned Person.
+Custom Fields
+يجب دعم Dynamic Custom Fields.
+Billing Preferences
+الحقول الأساسية:
+
+Fee Calculation Method.
+Payment Method.
+Fee Value.
+ويتم توسيع Billing Module لاحقًا.
+22. علاقة Legal Matter وLitigation Case
+Legal Matter هو Parent.
+Litigation Case سجل قضائي مرتبط به.
+مثال:
+Legal Matter
+-> Litigation Case
+لكن Litigation Case يجب أن يبقى سجلًا واحدًا طوال دورة التقاضي.
+23. Litigation Case Lifecycle
+لا يتم إنشاء Case جديد لكل مرحلة قضائية.
+يتم الاحتفاظ بنفس Case Record، ويحتوي على Stages.
+المراحل المبدئية:
+
+First Instance.
+Appeal.
+Supreme Court.
+Enforcement.
+كل Stage يمكن أن يحتوي على بيانات مستقلة مثل:
+
+Case Number.
+Court.
+Circuit.
+Judges if needed.
+Hearings.
+Pleadings.
+Decisions.
+Judgments.
+Attachments.
+Important Dates.
+Reminders.
+لكن جميع المراحل تكون داخل نفس Litigation Case.
+24. Custom Fields Engine
+يجب بناء Custom Fields Engine قابل لإعادة الاستخدام.
+يستخدم في:
+
+Parties.
+Sub-Clients.
+Legal Matters.
+Litigation Cases.
+Contracts مستقبلًا.
+أنواع الحقول المطلوبة مبدئيًا:
+
+Text.
+Long Text.
+Number.
+Currency.
+Date.
+Date & Time.
+Dropdown.
+Multi Select.
+Checkbox.
+User Selector.
+Party Selector.
+File Upload.
+Attachments & Documents
+يجب وجود Document Management Layer مركزي.
+كل Document يجب أن يحتوي على Metadata مثل:
+File Name.
+File Type.
+File Size.
+Uploaded By.
+Upload Date.
+Related Entity.
+Description.
+Privacy.
+Category.
+ويجب إمكانية ربط نفس المستند بكيانات مختلفة إذا احتاج النظام لذلك.
+26. Reminders
+يجب أن يستطيع المستخدم إنشاء Reminder مرتبط بـ:
+
+Party.
+Sub-Client.
+Legal Matter.
+Case.
+Contract مستقبلًا.
+البيانات:
+
+Title.
+Description.
+Due Date.
+Assigned User.
+Status.
+Notification Settings.
+Audit Trail
+يجب وجود Audit Log شامل.
+يسجل على الأقل:
+User Login.
+Record Created.
+Record Updated.
+Record Deleted.
+Permission Changed.
+Assignment Changed.
+Status Changed.
+Document Uploaded.
+Document Deleted.
+Party Merged.
+User Disabled.
+يجب الاحتفاظ بـ:
+
+User.
+Action.
+Entity.
+Entity ID.
+Timestamp.
+Old Value.
+New Value.
+البحث
+أنشئ Global Search يسمح بالبحث في:
+Clients.
+Sub-Clients.
+Users.
+Parties.
+Legal Matters.
+Cases.
+Contracts مستقبلًا.
+Documents.
+ويجب دعم Filters متقدمة.
+29. Dashboard
+صمم Dashboard مرنة.
+مبدئيًا تعرض:
+
+Open Legal Matters.
+Open Cases.
+Upcoming Hearings.
+Upcoming Deadlines.
+Pending Requests.
+Tasks / Reminders.
+Recent Activity.
+ويختلف المحتوى حسب Role وPermissions.
+30. Platform Owner Portal
+يجب وجود Portal منفصلة لمالك المنصة.
+تحتوي على:
+
+Clients.
+Client Accounts.
+Subscriptions.
+Enabled Modules.
+User Limits.
+Sub-Client User Limits.
+Client Status.
+Packages.
+Global Settings.
+System Logs.
+Support/Admin Tools.
+مالك المنصة يجب ألا يحتاج للدخول يدويًا إلى قواعد البيانات لإدارة الاشتراكات والحدود.
+31. Client Admin Settings
+كل Client يجب أن يمتلك Settings Area لإدارة:
+
+Organization Information.
+Users.
+Roles.
+Permissions.
+Teams.
+Categories.
+Subcategories.
+Statuses.
+Custom Fields.
+Numbering.
+Privacy.
+Notifications.
+Enabled Internal Options.
+واجهة المستخدم
+أريد التصميم:
+Modern.
+Professional.
+Enterprise SaaS.
+Clean.
+Minimal.
+مناسب للأعمال القانونية.
+Responsive.
+يدعم:
+
+Desktop.
+Tablet.
+Mobile.
+ويجب دعم اللغة العربية بشكل كامل:
+RTL
+مع تجهيز النظام لدعم الإنجليزية:
+LTR
+من البداية.
+33. Navigation
+استخدم Sidebar رئيسية.
+الأقسام المبدئية:
+
+Dashboard.
+Requests.
+Legal Matters.
+Litigation.
+Contracts.
+Sub-Clients.
+Parties.
+Documents.
+Reminders.
+Reports.
+Settings.
+يجب إخفاء أي Module غير مفعل للـClient.
+34. التقنية المقترحة
+أفضل استخدام Stack حديث ومستقر.
+Frontend:
+Next.js
+Language:
+TypeScript
+Styling:
+Tailwind CSS
+UI Components:
+shadcn/ui
+Backend:
+Next.js Server Actions / API
+أو Backend منفصل إذا كانت الحاجة التقنية تبرر ذلك.
+Database:
+PostgreSQL
+ORM:
+Prisma
+Authentication:
+يمكن استخدام:
+Auth.js
+أو حل Authentication مناسب يدعم Multi-Tenant وRBAC.
+File Storage:
+Object Storage متوافق مع S3.
+Version Control:
+Git + GitHub
+35. قواعد مهمة أثناء البرمجة
+
+لا تضع Business Logic داخل UI Components.
+استخدم Reusable Components.
+استخدم Clean Folder Structure.
+استخدم TypeScript Strict Mode.
+استخدم Server-Side Validation.
+استخدم Schema Validation مثل Zod.
+لا تعتمد على Frontend Permissions فقط.
+كل Permission يجب التحقق منها أيضًا Backend.
+كل Query يجب أن تراعي client_id.
+لا تسمح Cross-Tenant Data Access.
+استخدم Soft Delete في السجلات المهمة.
+احتفظ بـCreated At / Updated At / Created By / Updated By.
+جهز Database Migration System.
+جهز Seed Data للـRoles والـPermissions الأساسية.
+المطلوب في المرحلة الأولى من التنفيذ
+لا أريد بناء المشروع كاملًا مرة واحدة.
+ابدأ بـFoundation ثم نفذ على مراحل.
+Phase 1 – Core
+Authentication.
+Multi-Tenant Architecture.
+Client.
+Users.
+Roles.
+Permissions.
+Teams.
+Platform Owner Portal.
+Client Settings.
+Internal Numbering.
+Audit Trail.
+Phase 2 – Sub-Clients & Parties
+
+Sub-Clients.
+Party Profiles.
+Party Relationships.
+Categories.
+Custom Fields.
+Privacy.
+Duplicate Detection.
+Merge Parties.
+Attachments.
+Reminders.
+Phase 3 – Legal Matters
+
+Legal Matters.
+Matter Types.
+Status Workflow.
+Assignments.
+Timeline.
+Attachments.
+Privacy.
+Requests.
+Phase 4 – Litigation
+
+Litigation Requests.
+Litigation Cases.
+Opponents.
+Case Stages.
+Hearings.
+Pleadings.
+Decisions.
+Judgments.
+Deadlines.
+Reminders.
+Billing Preferences.
+Phase 5
+بعد الانتهاء من المراحل السابقة سيتم تزويدكم بالمواصفات التفصيلية الخاصة بـ:
+
+Contract Lifecycle Management.
+Advanced Billing.
+Reports.
+Analytics.
+AI Features.
+Advanced Workflow Automation.
+طريقة العمل المطلوبة
+قبل البدء في كتابة جميع الصفحات، أريد أولًا:
+تصميم Database Schema المقترح.
+رسم Entity Relationships.
+تحديد Architecture.
+تحديد Folder Structure.
+تحديد Authentication & Authorization Strategy.
+تحديد Multi-Tenant Strategy.
+تحديد Roles & Permissions Model.
+تقسيم المشروع إلى Development Milestones.
+بعد اعتماد هذه النقاط يبدأ التطوير.
+لا تبدأ ببناء كامل التطبيق مباشرة قبل اعتماد Architecture وDatabase Schema.
+والهدف النهائي هو بناء Enterprise Legal Management SaaS قابلة للتوسع، وليس مجرد موقع بواجهات ثابتة.
+

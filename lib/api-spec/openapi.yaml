@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+  - name: clients
+  - name: users
+  - name: audit
 paths:
   /healthz:
     get:
@@ -24,7 +28,187 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List clients
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Status"
+      responses:
+        "200":
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+  /clients/{clientId}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get client
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update client
+      parameters:
+        - $ref: "#/components/parameters/ClientId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientUpdate"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users in current client
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/UserStatus"
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Invite a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /users/{userId}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit log entries
+      parameters:
+        - $ref: "#/components/parameters/Search"
+      responses:
+        "200":
+          description: Audit log list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
 components:
+  parameters:
+    Search:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+    Status:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+    UserStatus:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +217,101 @@ components:
           type: string
       required:
         - status
+    DashboardSummary:
+      type: object
+      required: [openMatters, openCases, upcomingHearings, pendingRequests, upcomingDeadlines, recentActivity]
+      properties:
+        openMatters: { type: number }
+        openCases: { type: number }
+        upcomingHearings: { type: number }
+        pendingRequests: { type: number }
+        upcomingDeadlines: { type: number }
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+    Activity:
+      type: object
+      required: [id, title, description, time, type]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        time: { type: string }
+        type: { type: string }
+    Client:
+      type: object
+      required: [id, referenceNo, name, plan, status, users, enabledModules]
+      properties:
+        id: { type: string }
+        referenceNo: { type: string }
+        name: { type: string }
+        legalName: { type: ["string", "null"] }
+        plan: { type: string }
+        status: { type: string }
+        users: { type: number }
+        enabledModules:
+          type: array
+          items: { type: string }
+        createdAt: { type: string }
+    ClientInput:
+      type: object
+      required: [name, plan]
+      properties:
+        name: { type: string, minLength: 2 }
+        legalName: { type: string }
+        plan: { type: string }
+        enabledModules:
+          type: array
+          items: { type: string }
+    ClientUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2 }
+        legalName: { type: string }
+        plan: { type: string }
+        status: { type: string }
+        enabledModules:
+          type: array
+          items: { type: string }
+    User:
+      type: object
+      required: [id, referenceNo, name, email, role, userType, status, lastActive]
+      properties:
+        id: { type: string }
+        referenceNo: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string }
+        userType: { type: string }
+        status: { type: string }
+        subClient: { type: ["string", "null"] }
+        lastActive: { type: string }
+        initials: { type: string }
+    UserInput:
+      type: object
+      required: [name, email, role, userType]
+      properties:
+        name: { type: string, minLength: 2 }
+        email: { type: string }
+        role: { type: string }
+        userType: { type: string }
+        subClient: { type: string }
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2 }
+        role: { type: string }
+        status: { type: string }
+        subClient: { type: string }
+    AuditLog:
+      type: object
+      required: [id, user, action, entity, timestamp, description]
+      properties:
+        id: { type: string }
+        user: { type: string }
+        action: { type: string }
+        entity: { type: string }
+        timestamp: { type: string }
+        description: { type: string }
 

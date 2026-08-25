@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface UserUpdate {
+  /** @minLength 2 */
+  name?: string;
+  role?: string;
+  status?: string;
+  subClient?: string;
 }
