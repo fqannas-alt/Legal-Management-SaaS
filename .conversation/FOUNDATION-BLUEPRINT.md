@@ -518,4 +518,39 @@ tests/
 
 ### التوصية التنفيذية
 
-اعتماد **Modular Monolith + PostgreSQL + Prisma + Auth.js/OIDC + S3-compatible storage**، والبدء بـMilestone 0 ثم Milestone 1 فقط. لا نضيف Contracts أو Billing المتقدم إلى schema التنفيذي قبل تثبيت الـFoundation، لكن نحتفظ بحدودها وعلاقاتها المشتركة من الآن.
+اعتماد **Modular Monolith + PostgreSQL + Drizzle ORM + Auth.js/OIDC + S3-compatible storage**، والبدء بـMilestone 0 ثم Milestone 1 فقط. لا نضيف Contracts أو Billing المتقدم إلى schema التنفيذي قبل تثبيت الـFoundation، لكن نحتفظ بحدودها وعلاقاتها المشتركة من الآن.
+
+> **تحديث 2026-08-25:** ORM المعتمد فعليًا هو **Drizzle**، وليس Prisma (راجع القسم 12 أدناه للتفاصيل والسبب).
+
+## 12. Implementation Status — Draft v1 (2026-08-25)
+
+هذا القسم يوثّق تنفيذ "LegalTech Platform — Technical Foundation Proposal (Draft v1)" الذي راجعناه معًا، ونقاط الانحراف عن الافتراضات الأصلية فيه بسبب واقع المشروع الحالي.
+
+### قرار حاسم: Drizzle بدل Prisma
+
+مستند Draft v1 كتب الـschema بالكامل بصيغة Prisma (`schema.prisma`, Prisma Client Extensions). لكن `lib/db` في هذا المشروع كان مُجهّزًا مسبقًا بـ**Drizzle ORM** (`drizzle-orm`, `drizzle-kit push`)، بدون أي كود Prisma. تقرر الالتزام بـDrizzle والامتناع عن إدخال ORM ثانٍ، وتُرجمت كل الكيانات في Draft v1 حرفيًا (نفس الحقول، العلاقات، الـEnums، الـUnique/Index/Check constraints) إلى جداول Drizzle.
+
+**التطبيق العملي لكل ميكانيكية كانت مبنية على Prisma تحديدًا:**
+
+| آلية في Draft v1 (Prisma) | البديل في التنفيذ الفعلي (Drizzle) |
+|---|---|
+| `schema.prisma` واحد | ملفات مقسّمة حسب النطاق تحت `lib/db/src/schema/`: `enums.ts`, `platform.ts`, `users.ts`, `sub-clients.ts`, `parties.ts`, `legal-matters.ts`, `litigation.ts`, `shared.ts`, `auth.ts` |
+| `cuid()` كـPrimary Key | `@paralleldrive/cuid2` عبر هيلبر `id()` في `common.ts` |
+| Prisma Client Extension لفرض `where: { clientId }` تلقائيًا | لسا غير منفَّذ — نفس الفكرة مطلوبة كـwrapper حول Drizzle query builder في طبقة الـrepositories عند بدء Milestone 1 الفعلي (Services/Repositories) |
+| Postgres RLS + `SET LOCAL app.current_client_id` | نفس القرار، لسا غير مفعّل — يبقى بند مفتوح (راجع القسم 10، قرار #2) |
+| `@@unique`, `@@index`, CHECK constraint على `CaseParty` | مطابقة 1:1 عبر `unique()`, `index()`, `check()` من `drizzle-orm/pg-core` |
+
+### ما تم تنفيذه فعليًا (schema + seed فقط)
+
+- **Schema كامل** حسب كل جداول Draft v1 (قسم 2 و3) — موجود في `lib/db/src/schema/*.ts`، مصدّر عبر `lib/db/src/schema/index.ts`.
+- **Seed** لبيانات الكتالوج المشتركة — `lib/db/src/seed.ts` (يُشغَّل عبر `pnpm --filter @workspace/db run seed`):
+  - Modules: `litigation` (مفعّل)، `contracts` (محجوز، غير مفعّل بعد).
+  - Plans: `professional`, `enterprise`.
+  - Permission catalog كامل بصيغة `module.resource.action` (حسم فيه سؤال Draft v1 حول `client.users.manage` → اعتُمد `core.user.manage_users`).
+  - الأدوار النظامية السبعة كما وردت حرفيًا في المتطلبات، مع صلاحيات افتراضية معقولة لكل دور (قابلة للتخصيص لاحقًا لكل Client).
+- **لم يُنفَّذ بعد** (خارج نطاق هذه الجولة): طبقة Services/Repositories، Tenant Context middleware، RBAC/Privacy resolution engine، Auth.js integration، Numbering concurrency logic، Audit Log interceptor. هذه من صلب Milestone 1 وتحتاج جولة تنفيذ منفصلة.
+- **Migration**: لا يوجد مجلد `/migrations` — هذا المشروع يعتمد `drizzle-kit push` مباشرة (سكربتات `push` / `push-force` في `lib/db/package.json`) بدل ملفات migration. يحتاج `DATABASE_URL` فعلي (متوفر على Replit) لتطبيق الـschema فعليًا على قاعدة البيانات — لم يُشغَّل من هذه البيئة المحلية.
+
+### تعارض إضافي لم يُحسم بعد: Presentation Layer
+
+Draft v1 (وMilestone 1 folder structure في القسم 6 أعلاه) يفترضان **Next.js App Router**. لكن الواجهة الفعلية في هذا المشروع (`artifacts/legal-portal`) هي **Vite + React SPA بموجّه `wouter`**، تتحدث مع خادم **Express** منفصل (`artifacts/api-server`) عبر REST مولّد من OpenAPI (`lib/api-spec`, `lib/api-zod`, `lib/api-client-react`). هذا لم يُحسم في هذه الجولة لأنه لا يمس الـschema — لكنه قرار معماري لازم يُتخذ صراحة قبل بناء طبقة الـServices/Repositories، لأنه يغيّر مكان كود التحقق من الصلاحيات وTenant Context (Route Handler في Next.js مقابل Express middleware).
