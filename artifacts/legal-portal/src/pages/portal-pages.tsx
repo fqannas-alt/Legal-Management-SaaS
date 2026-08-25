@@ -52,7 +52,7 @@ export function DashboardPage() {
   ];
 
   return (
-    <PageFrame eyebrow="مركز القيادة" title="صباح الخير، عبدالله" description="هذه صورة مركزة لما يحتاج انتباه فريقك اليوم.">
+    <PageFrame eyebrow="مركز القيادة" title="صباح الخير، فيصل" description="هذه صورة مركزة لما يحتاج انتباه فريقك اليوم.">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">الأحد، ٢٣ يونيو ٢٠٢٤ <span className="mx-2 text-border">•</span> تحديث مباشر</p>
