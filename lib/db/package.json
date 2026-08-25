@@ -10,7 +10,8 @@
   "scripts": {
     "push": "drizzle-kit push --config ./drizzle.config.ts",
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
-    "seed": "tsx ./src/seed.ts"
+    "seed": "tsx ./src/seed.ts",
+    "seed:demo": "tsx ./src/seed-demo.ts"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
